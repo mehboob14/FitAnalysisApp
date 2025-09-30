@@ -12,7 +12,9 @@ const Catalog = () => {
   const fetchDresses = async (skipValue) => {
     setLoading(true);
     try {
-      const response = axios.get("/api/catalog", { params: { skip: skipValue, limit } });
+      const response = await axios.get("http://20.84.46.35:4000/catalog/", {
+        params: { skip: skipValue, limit },
+      });
       setDresses(response.data.data);
     } catch (error) {
       console.error(error);

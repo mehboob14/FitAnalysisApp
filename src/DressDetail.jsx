@@ -16,12 +16,13 @@ const DressDetail = () => {
   const [frontImage, setFrontImage] = useState(null);
   const [sideImage, setSideImage] = useState(null);
   const [availableSizes, setAvailableSizes] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const fetchDressDetail = async () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://20.84.46.35:4000/dress/${dressId}/${retailer}`
+        `http://20.84.46.35:5000/dress/${dressId}/${retailer}`
       );
       setDress(response.data);
     } catch (error) {
@@ -46,6 +47,13 @@ const DressDetail = () => {
   }, [dressId, retailer]);
 
   const handleRunFitAnalysis = () => {
+  if (!selectedSize || !height || !userEmail || !frontImage || !sideImage) {
+      alert("Please fill in all fields before submitting.");
+      return;
+    }
+    if (isSubmitting) return; 
+    setIsSubmitting(true);
+
     const formData = new FormData();
     formData.append("height", height);
     formData.append("user_size", selectedSize);
@@ -55,22 +63,29 @@ const DressDetail = () => {
 
     axios
       .post(
-        `http://20.84.46.35:4000/fit-analysis/submit-job/${dressId}/${retailer}`,
+        `http://20.84.46.35:5000/fit-analysis/submit-job/${dressId}/${retailer}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       )
       .then(() => {
         alert("Fit analysis submitted!");
         setShowFitModal(false);
+        setFrontImage(null);
+        setSideImage(null);
+        setSelectedSize("");
+        setHeight("");
       })
       .catch((err) => {
         console.error(err);
         alert("Error running fit analysis");
-      });
+      })
+      .finally(() => setIsSubmitting(false));
   };
 
-  if (loading) return <p className="text-gray-500 text-center mt-10">Loading...</p>;
-  if (!dress) return <p className="text-gray-500 text-center mt-10">Dress not found.</p>;
+  if (loading)
+    return <p className="text-gray-500 text-center mt-10">Loading...</p>;
+  if (!dress)
+    return <p className="text-gray-500 text-center mt-10">Dress not found.</p>;
 
   return (
     <div className="p-6 bg-white min-h-screen text-black">
@@ -232,13 +247,7 @@ const DressDetail = () => {
 
             <label className="block mb-3">
               <span className="block mb-1">Front Image:</span>
-              {frontImage && (
-                <img
-                  src={URL.createObjectURL(frontImage)}
-                  alt="Front Preview"
-                  className="w-32 h-40 object-cover rounded mb-2"
-                />
-              )}
+
               <input
                 type="file"
                 accept="image/*"
@@ -249,13 +258,7 @@ const DressDetail = () => {
 
             <label className="block mb-4">
               <span className="block mb-1">Side Image:</span>
-              {sideImage && (
-                <img
-                  src={URL.createObjectURL(sideImage)}
-                  alt="Side Preview"
-                  className="w-32 h-40 object-cover rounded mb-2"
-                />
-              )}
+
               <input
                 type="file"
                 accept="image/*"
@@ -267,9 +270,12 @@ const DressDetail = () => {
             <div className="flex justify-end space-x-2">
               <button
                 onClick={handleRunFitAnalysis}
-                className="px-4 py-2 bg-black text-white rounded hover:opacity-80 transition-opacity"
+                disabled={isSubmitting}
+                className={`px-4 py-2 rounded text-white transition-opacity ${
+                  isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-black hover:opacity-80"
+                }`}
               >
-                Run Fit Analysis
+                {isSubmitting ? "Submitting..." : "Run Fit Analysis"}
               </button>
               <button
                 onClick={() => setShowFitModal(false)}

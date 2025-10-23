@@ -18,11 +18,19 @@ const DressDetail = () => {
   const [availableSizes, setAvailableSizes] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const formatRetailer = (name) => {
+    const map = {
+      net_a_porter: "Net-A-Porter",
+      mytheresa: "Mytheresa",
+    };
+    return map[name] || name;
+  };
+
   const fetchDressDetail = async () => {
     setLoading(true);
     try {
       const response = await axios.get(
-        `http://20.84.46.35:5000/dress/${dressId}/${retailer}`
+        `http://4.227.153.254:3000/dress/${dressId}/${retailer}`
       );
       setDress(response.data);
     } catch (error) {
@@ -47,11 +55,11 @@ const DressDetail = () => {
   }, [dressId, retailer]);
 
   const handleRunFitAnalysis = () => {
-  if (!selectedSize || !height || !userEmail || !frontImage || !sideImage) {
+    if (!selectedSize || !height || !userEmail || !frontImage || !sideImage) {
       alert("Please fill in all fields before submitting.");
       return;
     }
-    if (isSubmitting) return; 
+    if (isSubmitting) return;
     setIsSubmitting(true);
 
     const formData = new FormData();
@@ -63,12 +71,12 @@ const DressDetail = () => {
 
     axios
       .post(
-        `http://20.84.46.35:5000/fit-analysis/submit-job/${dressId}/${retailer}`,
+        `http://4.227.153.254:3000/fit-analysis/submit-job/${dressId}/${retailer}`,
         formData,
         { headers: { "Content-Type": "multipart/form-data" } }
       )
       .then(() => {
-        alert("Fit analysis submitted!");
+        alert("Fit Analysis Job Submitted!");
         setShowFitModal(false);
         setFrontImage(null);
         setSideImage(null);
@@ -90,8 +98,15 @@ const DressDetail = () => {
   return (
     <div className="p-6 bg-white min-h-screen text-black">
       <h1 className="text-3xl font-semibold mb-6">
-        {dress.retailer} - {dress.dress_id}
+        {formatRetailer(dress.designer)} - {dress.title}
       </h1>
+
+      {dress.price && (
+        <p className="text-lg font-medium mb-4">
+          Price: $
+          {typeof dress.price === "object" ? dress.price.amount : dress.price}
+        </p>
+      )}
 
       {/* Images */}
       <div className="flex overflow-x-auto gap-4 mb-6 py-2">
@@ -169,7 +184,9 @@ const DressDetail = () => {
       {showSizeGuide && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
           <div className="bg-white text-black p-6 rounded-lg w-full max-w-lg shadow-lg overflow-y-auto max-h-[80vh] border border-black">
-            <h2 className="text-2xl font-semibold text-center mb-4">Size Guide</h2>
+            <h2 className="text-2xl font-semibold text-center mb-4">
+              Size Guide
+            </h2>
             {Object.entries(dress.size_guide_popup).map(([key, value]) => (
               <div key={key} className="mb-4">
                 <h4 className="font-semibold mb-2">{key}</h4>
@@ -207,7 +224,9 @@ const DressDetail = () => {
       {showFitModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50 p-4">
           <div className="bg-white text-black p-6 rounded-lg w-full max-w-md shadow-lg border border-black">
-            <h2 className="text-2xl font-semibold text-center mb-4">Fit Analysis</h2>
+            <h2 className="text-2xl font-semibold text-center mb-4">
+              Fit Analysis
+            </h2>
 
             <label className="block mb-3">
               <span className="block mb-1">Select Size:</span>
@@ -226,7 +245,7 @@ const DressDetail = () => {
             </label>
 
             <label className="block mb-3">
-              <span className="block mb-1">Height (cm or inches):</span>
+              <span className="block mb-1">Height (in inches):</span>
               <input
                 type="text"
                 value={height}
@@ -272,7 +291,9 @@ const DressDetail = () => {
                 onClick={handleRunFitAnalysis}
                 disabled={isSubmitting}
                 className={`px-4 py-2 rounded text-white transition-opacity ${
-                  isSubmitting ? "bg-gray-400 cursor-not-allowed" : "bg-black hover:opacity-80"
+                  isSubmitting
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-black hover:opacity-80"
                 }`}
               >
                 {isSubmitting ? "Submitting..." : "Run Fit Analysis"}
